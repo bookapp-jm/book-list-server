@@ -17,7 +17,19 @@ app.use(cors());
 
 app.get('/', (req, res) => res.send('Testing 1, 2, 3'));
 
+app.get('/index', (request, response) => {
+  response.sendFile('index.html', { root: '../book-list-client' });
+});
 
+app.get('/api/v1/books', (request, response) => {
+  client.query(`SELECT book_id, title, author, image_url FROM books`)
+    .then(result => {
+      response.send(result.rows);
+    })
+    .catch(err => {
+      console.error(err);
+    });
+});
 
 
 

@@ -1,9 +1,11 @@
 'use strict';
 
+// CLIENT_URL = http://localhost:8080
+// DATABASE_URL = postgres://localhost:5432/
+
 const express = require('express');
 const cors = require('cors');
 const pg = require('pg');
-const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -21,24 +23,17 @@ app.get('/index', (request, response) => {
   response.sendFile('index.html', { root: '../book-list-client' });
 });
 
-app.get('/api/v1/books', (request, response) => {
-  client.query(`SELECT book_id, title, author, image_url FROM books`)
-    .then(result => {
-      response.send(result.rows);
-    })
-    .catch(err => {
-      console.error(err);
-    });
+app.get('/api/v1/books', (req, res) => {
+  client.query(`SELECT book_id, title, author, isbn, image_url FROM books;`) //add ISBN if needed?
+    .then(results => res.send(results.rows))
+    .catch(console.error);
 });
 
+loadDB();
 
+app.get('*', (req, res) => res.redirect(CLIENT_URL));
+app.listen(PORT, () => console.log(`Listening on port: ${PORT}`));
 
-
-
-// app.get('*', (req, res) => res.redirect(laksjflkasj_URL
-
-// CLIENT_URL = http://localhost:8080
-// DATABASE_URL = postgres://localhost:5432/
 
 function loadBooks() {
   client.query('SELECT COUNT(*) FROM books')
@@ -74,8 +69,3 @@ function loadDB() {
       console.error(err);
     });
 }
-
-
-loadDB();
-
-app.listen(PORT, () => console.log(`Listening on port: ${PORT}`));

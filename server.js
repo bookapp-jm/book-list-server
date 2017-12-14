@@ -7,7 +7,7 @@ const express = require('express');
 const cors = require('cors');
 const pg = require('pg');
 const page = require('page');
-const bodyparser = require('body-parser');
+const bodyParser = require('body-parser');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -18,19 +18,23 @@ client.connect();
 client.on('error', err => console.error(err));
 
 app.use(cors());
-app.use(bodyparser());
+app.use(bodyParser());
 
-app.get('/index', (request, response) => {
-  response.sendFile('index.html', { root: '../book-list-client' });
-});
+// app.get('/index', (request, response) => {
+//   response.sendFile('index.html', { root: '../book-list-client' });
+// });
 
-app.get('/new', (request, response) => {
-  response.sendFile('new.html', { root: '../book-list-client' });
-});
+// app.get('/new', (request, response) => {
+//   response.sendFile('new.html', { root: './book-list-client' });
+// });
 
-app.get('/api/v1/books', (req, res) => {
-  client.query(`SELECT book_id, title, author, isbn, image_url FROM books;`) //add ISBN if needed?
-    .then(results => res.send(results.rows))
+
+
+app.get('/api/v1/books', (request, response) => { //from db
+  client.query(`
+    SELECT book_id, title, author, isbn, image_url 
+    FROM books;`) //add ISBN if needed?
+    .then(results => response.send(results.rows))
     .catch(console.error);
 });
 
@@ -38,8 +42,7 @@ app.get('/api/v1/books/:book_id', (request, response) => {
   client.query(`
     SELECT * 
     FROM books 
-    WHERE book_id=$1;
-    `,
+    WHERE book_id=$1;`,
     [
       request.params.book_id
     ])
@@ -47,42 +50,43 @@ app.get('/api/v1/books/:book_id', (request, response) => {
     .catch(console.error);
 });
 
-app.post('/books/new', (req, res) => {
+app.post('/api/v1/books', bodyParser, (request, response) => { //put/post uses insert into
   client.query(`
-    INSERT INTO books (book_id, title, author, isbn, image_url, description) VALUES ($1, $2, $3, $4, $5, $6)`,
+    INSERT INTO books (book_id, title, author, isbn, image_url, description) 
+    VALUES ($1, $2, $3, $4, $5, $6)`,
     [
-      req.body.book_id,
-      req.body.title,
-      req.body.author,
-      req.body.isbn,
-      req.body.image_url,
-      req.body.description
+      request.body.book_id,
+      request.body.title,
+      request.body.author,
+      request.body.isbn,
+      request.body.image_url,
+      request.body.description
     ])
-    .then(results => res.send(results.rows))
+    .then(() => response.sendStatus(201))
     .catch(console.error);
 });
 
-app.post('/api/vi/books', (req, res) => {
+app.put('/api/v1/books/:book_id', function (request, response) {
   client.query(`
-    INSERT INTO books (book_id, title, author, isbn, image_url, description) VALUES ($1, $2, $3, $4, $5, $6)`,
+    UPDATE books 
+    SET title=$2, author=$3, isbn=$4, image_url=$5, description=$6) 
+    WHERE book_id=$1`,
     [
-      req.body.book_id,
-      req.body.title,
-      req.body.author,
-      req.body.isbn,
-      req.body.image_url,
-      req.body.description
+      request.body.book_id,
+      request.body.title,
+      request.body.author,
+      request.body.isbn,
+      request.body.image_url,
+      request.body.description
     ])
-    .then(results => res.send(results.rows))
+    .then(() => response.sendStatus(201))
     .catch(console.error);
 });
-
 
 
 loadDB();
 
-// app.get('/api/*', (req, res) => res.redirect(CLIENT_URL));
-app.get('*', (req, res) => res.redirect(CLIENT_URL));
+app.get('*', (request, response) => response.redirect(CLIENT_URL));
 app.listen(PORT, () => console.log(`Listening on port: ${PORT}`));
 
 

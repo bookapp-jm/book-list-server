@@ -1,7 +1,5 @@
 'use strict';
 
-//hello
-
 // CLIENT_URL = http://localhost:8080
 // DATABASE_URL = postgres://localhost:5432/
 
@@ -9,6 +7,7 @@ const express = require('express');
 const cors = require('cors');
 const pg = require('pg');
 const page = require('page');
+const bodyparser = require('body-parser');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,8 +18,7 @@ client.connect();
 client.on('error', err => console.error(err));
 
 app.use(cors());
-
-app.get('/', (req, res) => res.send('Testing 1, 2, 3'));
+app.use(bodyparser());
 
 app.get('/index', (request, response) => {
   response.sendFile('index.html', { root: '../book-list-client' });
@@ -38,12 +36,12 @@ app.get('/api/v1/books', (req, res) => {
 
 app.get('/api/v1/books/:book_id', (request, response) => {
   client.query(`
-    SELECT title 
+    SELECT * 
     FROM books 
     WHERE book_id=$1;
     `,
     [
-      request.body.book_id
+      request.params.book_id
     ])
     .then(results => response.send(results.rows))
     .catch(console.error);

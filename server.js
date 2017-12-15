@@ -87,7 +87,8 @@ app.put('/api/v1/books/:book_id', function (request, response) {
 
 loadDB();
 
-// app.get('/api/*', (request, response) => response.redirect(CLIENT_URL));
+app.get('/*', (request, response) => response.redirect(CLIENT_URL));
+app.get('/api/*', (request, response) => response.redirect(CLIENT_URL));
 app.get('*', (request, response) => response.redirect(CLIENT_URL));
 app.listen(PORT, () => console.log(`Listening on port: ${PORT}`));
 

@@ -7,7 +7,7 @@ const express = require('express');
 const cors = require('cors');
 const pg = require('pg');
 const page = require('page');
-const bodyParser = require('body-parser');
+const bodyParser = require('body-parser').urlencoded({extended: true});
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -18,7 +18,8 @@ client.connect();
 client.on('error', err => console.error(err));
 
 app.use(cors());
-app.use(bodyParser());
+// app.use(bodyParser);
+
 
 // app.get('/index', (request, response) => {
 //   response.sendFile('index.html', { root: '../book-list-client' });
@@ -51,11 +52,11 @@ app.get('/api/v1/books/:book_id', (request, response) => {
 });
 
 app.post('/api/v1/books', bodyParser, (request, response) => { //put/post uses insert into
+  console.log(request.body);
   client.query(`
-    INSERT INTO books (book_id, title, author, isbn, image_url, description) 
-    VALUES ($1, $2, $3, $4, $5, $6)`,
+    INSERT INTO books (title, author, isbn, image_url, description) 
+    VALUES ($1, $2, $3, $4, $5)`,
     [
-      request.body.book_id,
       request.body.title,
       request.body.author,
       request.body.isbn,

@@ -12,23 +12,13 @@ const bodyParser = require('body-parser').urlencoded({extended: true});
 const app = express();
 const PORT = process.env.PORT || 3000;
 const CLIENT_URL = process.env.CLIENT_URL;
+const TOKEN = process.env.TOKEN;
 
 const client = new pg.Client(process.env.DATABASE_URL);
 client.connect();
 client.on('error', err => console.error(err));
 
 app.use(cors());
-// app.use(bodyParser);
-
-
-// app.get('/index', (request, response) => {
-//   response.sendFile('index.html', { root: '../book-list-client' });
-// });
-
-// app.get('/new', (request, response) => {
-//   response.sendFile('new.html', { root: './book-list-client' });
-// });
-
 
 
 app.get('/api/v1/books', (request, response) => { //from db
@@ -51,6 +41,11 @@ app.get('/api/v1/books/:book_id', (request, response) => {
     .catch(console.error);
 });
 
+app.get('/api/v1/admin', (request, response) => {
+  response.send(TOKEN === parseInt(request.query.token));
+});
+//or remove the {} and just have ))) after .token
+
 app.post('/api/v1/books', bodyParser, (request, response) => { //put/post uses insert into
   console.log(request.body);
   client.query(`
@@ -67,13 +62,13 @@ app.post('/api/v1/books', bodyParser, (request, response) => { //put/post uses i
     .catch(console.error);
 });
 
-app.put('/api/v1/books/:book_id', function (request, response) {
+app.put('/api/v1/books/:book_id', bodyParser, (request, response) => {
   client.query(`
     UPDATE books 
     SET title=$2, author=$3, isbn=$4, image_url=$5, description=$6) 
     WHERE book_id=$1`,
     [
-      request.body.book_id,
+      request.params.book_id,
       request.body.title,
       request.body.author,
       request.body.isbn,
@@ -84,9 +79,22 @@ app.put('/api/v1/books/:book_id', function (request, response) {
     .catch(console.error);
 });
 
+app.delete('/api/v1/books/:book_id', (request, response) => {
+  client.query(`
+    DELETE FROM books
+    WHERE book_id=$1`,
+    [
+      request.params.book_id
+    ])
+    .then(() => response.sendStatus(201))
+    .catch(console.error);
+});
+
 
 loadDB();
 
+app.get('/*', (request, response) => response.redirect(CLIENT_URL));
+app.get('/api/*', (request, response) => response.redirect(CLIENT_URL));
 app.get('*', (request, response) => response.redirect(CLIENT_URL));
 app.listen(PORT, () => console.log(`Listening on port: ${PORT}`));
 
